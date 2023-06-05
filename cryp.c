@@ -87,7 +87,7 @@ void eencrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
+	const EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
 	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
 	unsigned int szz=32;
 	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
@@ -166,7 +166,7 @@ void edecrypt(char *fnam) {
 	printf("symkeyh=");
 	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
 	printf("\n");
-	EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
+	const EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
 	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
 	unsigned int szz=32;
 	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
