@@ -217,6 +217,8 @@ int main(int argc, char **argv) {
 		printf("Usage:\n   %s genkey <prefix>\n   %s encrypt <recip-key-pub>\n   %s decrypt <key-priv>\n", argv[0], argv[0], argv[0]);
 		exit(1);
 	}
+	EVP_add_digest(EVP_blake2s256());
+	EVP_add_cipher(EVP_chacha20());
 	if(!strcmp(argv[1], "genkey")) {
 		char *pkey=malloc(X25519_KEY_SIZE);
 		char *pubkey=malloc(X25519_KEY_SIZE);
