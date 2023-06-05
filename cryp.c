@@ -49,6 +49,7 @@ void eencrypt(char *fnam) {
 	char *pkey=malloc(X25519_KEY_SIZE);
 	char *pubkey=malloc(X25519_KEY_SIZE);
 	char *symkey=malloc(32);
+	char *symkeyh=malloc(32);
 	char *iv=malloc(16);
 	char *buf=malloc(4096);
 	char *bufenc=malloc(4096);
@@ -86,13 +87,15 @@ void eencrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	/*
-	printf("symkey=");
-	for(int i=0;i<32;i++) { printf("%hhx",symkey[i]); }
-	printf("\n");
-	*/
+	EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
+	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
+	unsigned int szz=32;
+	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
 	EVP_CIPHER_CTX *ciphctx=EVP_CIPHER_CTX_new();
-	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkey, iv);
+	printf("symkeyh=");
+	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
+	printf("\n");
+	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkeyh, iv);
 	int bufenclen=4096;
 	while((nr=read(STDIN_FILENO, buf, 4096))) {
 		EVP_EncryptUpdate(ciphctx, bufenc, &bufenclen, buf, nr);
@@ -107,6 +110,7 @@ void eencrypt(char *fnam) {
 	free(pkey);
 	free(pubkey);
 	free(symkey);
+	free(symkeyh);
 	free(iv);
 	free(buf);
 	free(bufenc);
@@ -119,6 +123,7 @@ void edecrypt(char *fnam) {
 	char *pkey=malloc(X25519_KEY_SIZE);
 	char *pubkey=malloc(X25519_KEY_SIZE);
 	char *symkey=malloc(32);
+	char *symkeyh=malloc(32);
 	char *iv=malloc(16);
 	memset(iv, 0, 16);
 	char *buf=malloc(4096);
@@ -158,13 +163,15 @@ void edecrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	/*
-	printf("symkey=");
-	for(int i=0;i<32;i++) { printf("%hhx",symkey[i]); }
+	printf("symkeyh=");
+	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
 	printf("\n");
-	*/
+	EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
+	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
+	unsigned int szz=32;
+	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
 	EVP_CIPHER_CTX *ciphctx=EVP_CIPHER_CTX_new();
-	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkey, iv);
+	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkeyh, iv);
 	int bufenclen=4096;
 	while((nr=read(STDIN_FILENO, buf, 4096))) {
 		EVP_EncryptUpdate(ciphctx, bufenc, &bufenclen, buf, nr);
@@ -178,6 +185,7 @@ void edecrypt(char *fnam) {
 	free(pkey);
 	free(pubkey);
 	free(symkey);
+	free(symkeyh);
 	free(iv);
 	free(buf);
 	free(bufenc);
