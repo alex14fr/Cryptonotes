@@ -1,4 +1,4 @@
-Compile with make. Dependency: OpenSSL, getrandom() system call.
+Compile with make. Depends on OpenSSL with X25519, ChaCha20, BLAKE2s256.
 
 Uses X25519 key exchange to wrap a ChaCha20 symmetric key.
 
@@ -13,14 +13,6 @@ Example:
 # generate X25519 keypair in mykey-priv and mykey-pub
 $ ./cryp genkey mykey
 
-# raw X25519 keys are 256-bit
-$ xxd mykey-pub
-00000000: 2992 5443 857e b6db a2ab 9e57 8f84 04c5  ).TC.~.....W....
-00000010: 635a e6cb 8e2d 8df5 7789 0420 763c fd34  cZ...-..w.. v<.4
-$ xxd mykey-priv
-00000000: f213 cdd4 64b7 ea78 c3bb 6818 f79d 42f0  ....d..x..h...B.
-00000010: 8879 7780 c144 f6d1 8d68 31c8 0705 4ee9  .yw..D...h1...N.
-
 # encrypt using public key
 $ echo "hello world" | ./cryp encrypt mykey-pub > encrypted
 
@@ -30,10 +22,6 @@ $ echo "hello world" | ./cryp encrypt mykey-pub > encrypted
 #   rest of the file: ChaCha20 encrypted stream with iv=0, and
 #      key=BLAKE2s256(X25519(ephemeral private key, recipient public key)||salt)
 #      key=BLAKE2s256(X25519(recipient private key, ephemeral public key)||salt)
-$ xxd encrypted
-00000000: 500f a46f fd38 0880 7e28 f060 df7f 15ae  P..o.8..~(.`....
-00000010: 804a 6f2d 7660 757d 0419 06ed d4bd 735c  .Jo-v`u}......s\
-00000020: b698 5d29 2fa9 7b8c 3ba9 a9ab            ..])/.{.;...
 
 # decrypt using private key
 $ ./cryp decrypt mykey-priv < encrypted

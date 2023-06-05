@@ -2,14 +2,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <sys/random.h>
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #define X25519_KEY_SIZE 32
 
-void getrand(char *buf, int size) {
-	getrandom(buf, size, 0);
-}
+#define getrand RAND_priv_bytes
 
 void genkey(char *outprefix, char *pkey, char *pubkey) {
 	getrand(pkey, X25519_KEY_SIZE);
