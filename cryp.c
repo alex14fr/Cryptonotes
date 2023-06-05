@@ -48,7 +48,7 @@ void eencrypt(char *fnam) {
 	char *recipkey=malloc(X25519_KEY_SIZE);
 	char *pkey=malloc(X25519_KEY_SIZE);
 	char *pubkey=malloc(X25519_KEY_SIZE);
-	char *symkey=malloc(32);
+	char *symkey=malloc(48);
 	char *symkeyh=malloc(32);
 	char *iv=malloc(16);
 	char *buf=malloc(4096);
@@ -58,6 +58,8 @@ void eencrypt(char *fnam) {
 	evpkey=EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, pkey, X25519_KEY_SIZE);
 	pctx=EVP_PKEY_CTX_new(evpkey, NULL);
 	write(STDOUT_FILENO, pubkey, X25519_KEY_SIZE);
+	getrand(symkey+32, 16);
+	write(STDOUT_FILENO, symkey+32, 16);
 	int f=open(fnam, O_RDONLY);
 	if(f<0) {
 		perror("open");
@@ -87,14 +89,20 @@ void eencrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	const EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
+	const EVP_MD *evpmd=EVP_get_digestbynid(NID_blake2s256);
 	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
 	unsigned int szz=32;
-	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
+	EVP_Digest(symkey, 48, symkeyh, &szz, evpmd, NULL);
+	if(szz!=32) {
+		printf("error EVP_Digest\n");
+		exit(1);
+	}
 	EVP_CIPHER_CTX *ciphctx=EVP_CIPHER_CTX_new();
+	/*
 	printf("symkeyh=");
 	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
 	printf("\n");
+	*/
 	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkeyh, iv);
 	int bufenclen=4096;
 	while((nr=read(STDIN_FILENO, buf, 4096))) {
@@ -122,7 +130,7 @@ void edecrypt(char *fnam) {
 	EVP_PKEY *evpkey, *evpsender;
 	char *pkey=malloc(X25519_KEY_SIZE);
 	char *pubkey=malloc(X25519_KEY_SIZE);
-	char *symkey=malloc(32);
+	char *symkey=malloc(48);
 	char *symkeyh=malloc(32);
 	char *iv=malloc(16);
 	memset(iv, 0, 16);
@@ -155,6 +163,15 @@ void edecrypt(char *fnam) {
 		}
 		nread+=nr;
 	}
+	nread=0;
+	while(nread<16) {
+		nr=read(STDIN_FILENO, symkey+32+nread, 16-nread);
+		if(nr<0) {
+			perror("read");
+			exit(1);
+		}
+		nread+=nr;
+	}
 	evpsender=EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, pubkey, X25519_KEY_SIZE);
 	EVP_PKEY_derive_init(pctx);
 	EVP_PKEY_derive_set_peer(pctx, evpsender);
@@ -163,13 +180,19 @@ void edecrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
+	const EVP_MD *evpmd=EVP_get_digestbynid(NID_blake2s256);
+	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
+	unsigned int szz=32;
+	EVP_Digest(symkey, 48, symkeyh, &szz, evpmd, NULL);
+	if(szz!=32) {
+		printf("error EVP_Digest\n");
+		exit(1);
+	}
+	/*
 	printf("symkeyh=");
 	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
 	printf("\n");
-	const EVP_MD *evpmd=EVP_get_digestbynid(NID_sha256);
-	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
-	unsigned int szz=32;
-	EVP_Digest(symkey, 32, symkeyh, &szz, evpmd, NULL);
+	*/
 	EVP_CIPHER_CTX *ciphctx=EVP_CIPHER_CTX_new();
 	EVP_EncryptInit(ciphctx, EVP_chacha20(), symkeyh, iv);
 	int bufenclen=4096;
