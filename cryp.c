@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "chacha20.h"
-#include "compact25519/src/compact_x25519.h"
-#include "compact25519/src/c25519/sha512.h"
+#include "compact25519vdr/compact_x25519.h"
+#include "compact25519vdr/c25519/sha512.h"
 
 #if defined(HAVE_ARC4RANDOM)
 #else
@@ -189,6 +189,12 @@ int main(int argc, char **argv) {
 		eencrypt(argv[2]);
 	} else if(!strcmp(argv[1], "decrypt")) {
 		edecrypt(argv[2]);
-	}
+	} /* else if(!strcmp(argv[1], "test-sha")) {
+		char input[22]="sha512/256 test vector";
+		char hash[32];
+		sha512_256(input, 22, hash);
+		for(int i=0;i<32;i++) printf("%0hhx", hash[i]);
+		printf("\n");
+	} */
 }
 
