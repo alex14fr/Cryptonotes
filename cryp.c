@@ -101,7 +101,6 @@ void eencrypt(char *fnam) {
 
 	free(buf);
 	free(bufenc);
-
 }
 
 void edecrypt(char *fnam) {

@@ -1,4 +1,4 @@
-Compile with make. Depends on OpenSSL with X25519, ChaCha20, BLAKE2s256.
+Compile with make. 
 
 Uses X25519 key exchange to wrap a ChaCha20 symmetric key.
 
@@ -20,8 +20,8 @@ $ echo "hello world" | ./cryp encrypt mykey-pub > encrypted
 #   ephemeral "sender"-generated X25519 key (32 bytes)
 #   salt (16 bytes)
 #   rest of the file: ChaCha20 encrypted stream with iv=0, and
-#      key=BLAKE2s256(X25519(ephemeral private key, recipient public key)||salt)
-#      key=BLAKE2s256(X25519(recipient private key, ephemeral public key)||salt)
+#      key=SHA512/256(X25519(ephemeral private key, recipient public key)||salt)
+#      key=SHA512/256(X25519(recipient private key, ephemeral public key)||salt)
 
 # decrypt using private key
 $ ./cryp decrypt mykey-priv < encrypted
