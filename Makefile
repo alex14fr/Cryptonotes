@@ -5,7 +5,7 @@ CSRD=compact25519/src
 LOBJS=chacha20.o $(CSRD)/compact_x25519.o $(CSRD)/compact_wipe.o $(CSRD)/c25519/c25519.o $(CSRD)/c25519/f25519.o $(CSRD)/c25519/sha512.o
 
 all: cryp.o libminicrypto.a
-	$(CC)  -o cryp $^
+	$(CC) $(LDFLAGS) -o cryp $^
 
 libminicrypto.a: $(LOBJS)
 	ar q $@ $^

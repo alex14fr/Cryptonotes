@@ -22,9 +22,16 @@ void getrand(char *buf, int size) {
 
 void sha512_256(char *in, int inlen, char *out) {
 	struct sha512_state s;
-	sha512_init(&s);
+	s.h[0] = 0x22312194FC2BF72CLL;
+	s.h[1] = 0x9F555FA3C84C64C2LL;
+	s.h[2] = 0x2393B86B6F53B151LL;
+	s.h[3] = 0x963877195940EABDLL;
+	s.h[4] = 0x96283EE2A88EFFE3LL;
+	s.h[5] = 0xBE5E1E2553863992LL;
+	s.h[6] = 0x2B0199FC2C85B8AALL;
+	s.h[7] = 0x0EB72DDC81C52CA2LL;
 	sha512_final(&s, in, inlen);
-	sha512_get(&s, out, 32, 32);
+	sha512_get(&s, out, 0, 32);
 }
 
 void genkey(char *outprefix, char *pkey, char *pubkey) {
@@ -85,9 +92,11 @@ void eencrypt(char *fnam) {
 	compact_x25519_shared(symkey, pkey, recipkey);
 	sha512_256(symkey, 48, symkeyh);
 
+/*
 	printf("symkeyh=");
 	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
 	printf("\n");
+*/
 
 	chacha_ctx cctx;
 	chacha_keysetup(&cctx, symkeyh);
