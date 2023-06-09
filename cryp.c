@@ -66,7 +66,7 @@ void eencrypt(char *fnam) {
 	int nread=0, nr;
 	while(nread<X25519_KEY_SIZE) {
 		nr=read(f, recipkey+nread, X25519_KEY_SIZE-nread);
-		if(nr<0) {
+		if(nr<=0) {
 			perror("nread");
 			exit(1);
 		}
@@ -87,10 +87,8 @@ void eencrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	const EVP_MD *evpmd=EVP_get_digestbynid(NID_blake2s256);
-	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
 	unsigned int szz=32;
-	EVP_Digest(symkey, 48, symkeyh, &szz, evpmd, NULL);
+	EVP_Digest(symkey, 48, symkeyh, &szz, EVP_sha256(), NULL);
 	if(szz!=32) {
 		printf("error EVP_Digest\n");
 		exit(1);
@@ -144,7 +142,7 @@ void edecrypt(char *fnam) {
 	int nread=0, nr;
 	while(nread<X25519_KEY_SIZE) {
 		nr=read(f, pkey+nread, X25519_KEY_SIZE-nread);
-		if(nr<0) {
+		if(nr<=0) {
 			perror("read");
 			exit(1);
 		}
@@ -178,10 +176,8 @@ void edecrypt(char *fnam) {
 		printf("derive key error");
 		exit(1);
 	}
-	const EVP_MD *evpmd=EVP_get_digestbynid(NID_blake2s256);
-	if(!evpmd) { printf("error openssl get_digest\n"); exit(1); }
 	unsigned int szz=32;
-	EVP_Digest(symkey, 48, symkeyh, &szz, evpmd, NULL);
+	EVP_Digest(symkey, 48, symkeyh, &szz, EVP_sha256(), NULL);
 	if(szz!=32) {
 		printf("error EVP_Digest\n");
 		exit(1);
