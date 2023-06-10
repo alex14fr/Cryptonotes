@@ -1,4 +1,4 @@
-CFLAGS=-DCOMPACT_DISABLE_ED25519 -std=c99 -O3 -Wall -Wno-pointer-sign
+CFLAGS=-DCOMPACT_DISABLE_ED25519 -std=c99 -O3 -march=native -Wall -Wno-pointer-sign
 
 CSRD=compact25519vdr
 
