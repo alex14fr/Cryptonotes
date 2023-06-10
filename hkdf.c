@@ -1,14 +1,14 @@
 #include "hkdf.h"
 #include <assert.h>
 
-void sha512(char *in, int inlen, char *out) {
+void sha512(const char *in, const int inlen, char * const out) {
 	struct sha512_state s;
 	sha512_init(&s);
 	sha512_final(&s, in, inlen);
 	sha512_get(&s, out, 0, 64);
 }
 
-void sha512_256(char *in, int inlen, char *out) {
+void sha512_256(const char *in, const int inlen, char * const out) {
 	struct sha512_state s;
 	s.h[0] = 0x22312194FC2BF72CLL;
 	s.h[1] = 0x9F555FA3C84C64C2LL;
@@ -22,7 +22,7 @@ void sha512_256(char *in, int inlen, char *out) {
 	sha512_get(&s, out, 0, 32);
 }
 
-void hmac_sha512(char *text, int textlen, char *key, int keylen, char *out) {
+void hmac_sha512(const char *text, const int textlen, const char *key, const int keylen, char * const out) {
 	assert(textlen<129 && keylen<129);
 	char ipad_h[128], opad[128];
 	struct sha512_state s;
@@ -42,11 +42,11 @@ void hmac_sha512(char *text, int textlen, char *key, int keylen, char *out) {
 	sha512_get(&s, out, 0, 64);
 }
 
-static void hkdf_sha512_extract(char *salt, int saltlen, char *ikm, int ikmlen, char *outprk) {
+static void hkdf_sha512_extract(const char *salt, const int saltlen, const char *ikm, const int ikmlen, char * const outprk) {
 	hmac_sha512(ikm, ikmlen, salt, saltlen, outprk);
 }
 
-void hkdf_sha512(char *salt, int saltlen, char *ikm, int ikmlen, char *okm, int okmlen) {
+void hkdf_sha512(const char *salt, const int saltlen, const char *ikm, const int ikmlen, char * const okm, const int okmlen) {
 	assert(okmlen<65);
 	char prk[64], fullokm[64];
 	hkdf_sha512_extract(salt, saltlen, ikm, ikmlen, prk);
