@@ -32,7 +32,7 @@ File format:
    the "input key material" (IKM) is computed by the sender as:
      IKM = X25519(ephemeral private key, recipient public key)
    or, equivalently, by the recipient as:
-     IKM = X25519(recipient private key, ephemeral public key)
+     IKM = X25519(recipient private key, ephemeral public key K)
    ChaCha20 key C is given by: 
      C = TRUNC(HKDF-SHA512(IKM, salt = S, info = ""))
      where TRUNC returns the first 32 bytes of its 64-byte input
