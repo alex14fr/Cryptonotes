@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include "chacha20.h"
 #include "compact25519vdr/compact_x25519.h"
-#include "compact25519vdr/c25519/sha512.h"
 
 #if defined(HAVE_ARC4RANDOM)
 #else
@@ -20,19 +19,6 @@ void getrand(char *buf, int size) {
 #endif
 }
 
-void sha512_256(char *in, int inlen, char *out) {
-	struct sha512_state s;
-	s.h[0] = 0x22312194FC2BF72CLL;
-	s.h[1] = 0x9F555FA3C84C64C2LL;
-	s.h[2] = 0x2393B86B6F53B151LL;
-	s.h[3] = 0x963877195940EABDLL;
-	s.h[4] = 0x96283EE2A88EFFE3LL;
-	s.h[5] = 0xBE5E1E2553863992LL;
-	s.h[6] = 0x2B0199FC2C85B8AALL;
-	s.h[7] = 0x0EB72DDC81C52CA2LL;
-	sha512_final(&s, in, inlen);
-	sha512_get(&s, out, 0, 32);
-}
 
 void genkey(char *outprefix, char *pkey, char *pubkey) {
 	char randseed[X25519_KEY_SIZE];
@@ -63,9 +49,10 @@ void eencrypt(char *fnam) {
 	char recipkey[X25519_KEY_SIZE];
 	char pkey[X25519_KEY_SIZE];
 	char pubkey[X25519_KEY_SIZE];
-	char symkey[48];
-	char symkeyh[32];
+	char ikm[32];
+	char salt[16];
 	char iv[16];
+	char ch20key[32];
 	char *buf=malloc(4096);
 	char *bufenc=malloc(4096);
 	size_t sz=32;
@@ -73,8 +60,10 @@ void eencrypt(char *fnam) {
 
 	genkey(NULL, pkey, pubkey);
 	write(STDOUT_FILENO, pubkey, X25519_KEY_SIZE);
-	getrand(symkey+32, 16);
-	write(STDOUT_FILENO, symkey+32, 16);
+	getrand(salt, 16);
+	write(STDOUT_FILENO, salt, 16);
+	getrand(iv, 16);
+	write(STDOUT_FILENO, iv, 16);
 	int f=open(fnam, O_RDONLY);
 	if(f<0) {
 		perror("open");
@@ -89,18 +78,17 @@ void eencrypt(char *fnam) {
 		nread+=nr;
 	}
 	close(f);
-	compact_x25519_shared(symkey, pkey, recipkey);
-	sha512_256(symkey, 48, symkeyh);
+	compact_x25519_shared(ikm, pkey, recipkey);
+	hkdf_sha512(salt, 16, ikm, 32, ch20key, 32);
 
 /*
-	printf("symkeyh=");
-	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
+	printf("ch20key=");
+	for(int i=0;i<32;i++) { printf("%hhx",ch20key[i]); }
 	printf("\n");
 */
 
 	chacha_ctx cctx;
-	chacha_keysetup(&cctx, symkeyh);
-	memset(iv, 0, 16);
+	chacha_keysetup(&cctx, ch20key);
 	chacha_ivsetup(&cctx, iv, 0);
 
 	while((nr=read(STDIN_FILENO, buf, 4096))) {
@@ -115,9 +103,10 @@ void eencrypt(char *fnam) {
 void edecrypt(char *fnam) {
 	char pkey[X25519_KEY_SIZE];
 	char pubkey[X25519_KEY_SIZE];
-	char symkey[48];
-	char symkeyh[32];
+	char ikm[32];
+	char salt[16];
 	char iv[16];
+	char ch20key[32];
 	char *buf=malloc(4096);
 	char *bufenc=malloc(4096);
 	int nread=0, nr;
@@ -146,25 +135,33 @@ void edecrypt(char *fnam) {
 	}
 	nread=0;
 	while(nread<16) {
-		nr=read(STDIN_FILENO, symkey+32+nread, 16-nread);
+		nr=read(STDIN_FILENO, salt+nread, 16-nread);
 		if(nr<0) {
 			perror("read");
 			exit(1);
 		}
 		nread+=nr;
 	}
-	compact_x25519_shared(symkey, pkey, pubkey);
-	sha512_256(symkey, 48, symkeyh);
+	nread=0;
+	while(nread<16) {
+		nr=read(STDIN_FILENO, iv+nread, 16-nread);
+		if(nr<0) {
+			perror("read");
+			exit(1);
+		}
+		nread+=nr;
+	}
+	compact_x25519_shared(ikm, pkey, pubkey);
+	hkdf_sha512(salt, 16, ikm, 32, ch20key, 32);
 
 	/*
-	printf("symkeyh=");
-	for(int i=0;i<32;i++) { printf("%hhx",symkeyh[i]); }
+	printf("ch20key=");
+	for(int i=0;i<32;i++) { printf("%hhx",ch20key[i]); }
 	printf("\n");
 	*/
 
 	chacha_ctx cctx;
-	chacha_keysetup(&cctx, symkeyh);
-	memset(iv, 0, 16);
+	chacha_keysetup(&cctx, ch20key);
 	chacha_ivsetup(&cctx, iv, 0);
 
 	while((nr=read(STDIN_FILENO, buf, 4096))) {
